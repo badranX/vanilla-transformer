@@ -34,14 +34,53 @@ class MultiHeadAttention(nn.Module):
 
         #1) Do all the linear projections in batch from d_model -> h x d_k
         query, key, value = [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1,2) for l, x in zip(self.linears, (query, key, value))]
+        print("query: ", query.shape)
 
         #2) Apply attention
         x, self.attn = attention(query, key, value, mask=mask, dropout=self.dropout)
 
         #3) "concat" using a view and apply a final linear.
         x = x.transpose(1, 2).contiguous().view(nbatches, -1, self.h*self.d_k)
-        return self.linears[-1](x)
+        return self.linears[-1](x) 
 
 
 if __name__ == "__main__":
-    print("Test")
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from numpy.random import default_rng
+    words = 4
+    S = 8
+    rng = default_rng()
+
+    mask = np.tril(np.ones([words,words], dtype= np.uint8))
+    mask = torch.from_numpy(mask)
+    print(mask)
+    x = np.random.randn(1, words, S)
+    x = torch.randn([1,words,S])
+    x = np.ones([words,S]) * np.arange(0,words*S).reshape(-1, S)/(words*S)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+
+    m = MultiHeadAttention(words, S, 0)
+
+    indx, indy = np.indices((words,S))
+    print(indx.shape)
+    x = indx + indy
+    x = x/x.max()
+    ax1.set_title("x input")
+    ax1.imshow(x, cmap="gray")
+    x = np.expand_dims(x, 0)
+    x = torch.FloatTensor(x)
+    print(mask)
+    y, attn = attention(x, x, x, mask=mask, dropout=None)
+    y = m(x,x,x)
+    #y = m(x, x, x)
+    print(y.shape)
+    print(y.max())
+    print(attn)
+    ax2.set_title("attention - props on each pixel")
+    ax2.imshow(np.asarray(attn.detach()).transpose(1, 2, 0), cmap="gray")
+    ax3.set_title("y output")
+    ax3.imshow(np.asarray(y.detach()).transpose(1,2, 0), cmap="gray")
+
+    plt.show()

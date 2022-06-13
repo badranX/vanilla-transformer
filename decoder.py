@@ -29,5 +29,3 @@ class Decoder(nn.Module):
         for layer in self.layers:
             x = layer(x, memory, src_mask, tgt_mask)
         return self.norm(x)
-
-
