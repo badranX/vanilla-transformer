@@ -1,7 +1,6 @@
 import math, copy, time
 import torch.nn as nn
-import utils
-
+from . import utils
 
 class DecoderLayer(nn.Module):
     def __init__(self, size, self_attn, src_attn, feed_forward, dropout):
@@ -29,5 +28,3 @@ class Decoder(nn.Module):
         for layer in self.layers:
             x = layer(x, memory, src_mask, tgt_mask)
         return self.norm(x)
-
-

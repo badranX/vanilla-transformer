@@ -2,12 +2,24 @@ import math
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-import utils
+from . import utils
+
+
+def iattention(scores, value, mask=None, dropout=None):
+    d_k = query.size(-1)
+
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, -1e9)
+    p_attn = F.softmax(scores, dim=-1)
+    if dropout is not None:
+        p_attn = dropout(p_attn)
+    return torch.matmul(p_attn, value), p_attn
 
 
 def attention(query, key, value, mask=None, dropout=None):
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2, -1))/math.sqrt(d_k)
+    #scores = query.transpose(-2, -1)
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
     p_attn = F.softmax(scores, dim=-1)
@@ -41,7 +53,3 @@ class MultiHeadAttention(nn.Module):
         #3) "concat" using a view and apply a final linear.
         x = x.transpose(1, 2).contiguous().view(nbatches, -1, self.h*self.d_k)
         return self.linears[-1](x)
-
-
-if __name__ == "__main__":
-    print("Test")

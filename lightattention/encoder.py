@@ -1,6 +1,6 @@
 import math, copy, time
 import torch.nn as nn
-import utils
+from . import utils
 
 
 class EncoderLayer(nn.Module):
